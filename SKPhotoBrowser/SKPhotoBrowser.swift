@@ -17,6 +17,8 @@ open class SKPhotoBrowser: UIViewController {
     open var activityItemProvider: UIActivityItemProvider?
     open var photos: [SKPhotoProtocol] = []
     
+    open var customDismissBlock: ((_ completion: (() -> Void)?) -> Void)?
+    
     internal lazy var pagingScrollView: SKPagingScrollView = SKPagingScrollView(frame: self.view.frame, browser: self)
     
     // appearance
@@ -208,9 +210,14 @@ open class SKPhotoBrowser: UIViewController {
         if !animated {
             modalTransitionStyle = .crossDissolve
         }
-        dismiss(animated: !animated) {
+        let localCompletion = {
             completion?()
             self.delegate?.didDismissAtPageIndex?(self.currentPageIndex)
+        }
+        if let customDismissBlock = customDismissBlock {
+            customDismissBlock(localCompletion)
+        } else {
+            dismiss(animated: !animated, completion: localCompletion)
         }
     }
     
