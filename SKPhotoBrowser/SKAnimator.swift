@@ -49,7 +49,7 @@ class SKAnimator: NSObject, SKPhotoBrowserAnimatorDelegate {
     }
     
     func willPresent(_ browser: SKPhotoBrowser) {
-        guard let sender = browser.delegate?.viewForPhoto?(browser, index: browser.currentPageIndex) ?? senderViewForAnimation else {
+        guard let sender = browser.delegate?.presentationViewForPhoto?(browser, index: browser.currentPageIndex) ?? senderViewForAnimation else {
             presentAnimation(browser)
             return
         }
@@ -79,12 +79,14 @@ class SKAnimator: NSObject, SKPhotoBrowserAnimatorDelegate {
     }
     
     func willDismiss(_ browser: SKPhotoBrowser) {
-        guard let sender = browser.delegate?.viewForPhoto?(browser, index: browser.currentPageIndex),
+        guard let sender = browser.delegate?.dismissViewForPhoto?(browser, index: browser.currentPageIndex),
             let image = browser.photoAtIndex(browser.currentPageIndex).underlyingImage,
             let scrollView = browser.pageDisplayedAtIndex(browser.currentPageIndex) else {
                 
             senderViewForAnimation?.isHidden = false
-            browser.dismissPhotoBrowser(animated: false)
+            browser.dismissPhotoBrowser(animated: false, completion: {
+                self.cleanupViews()
+            })
             return
         }
 
@@ -199,10 +201,14 @@ private extension SKAnimator {
             },
             completion: { (_) -> Void in
                 browser.dismissPhotoBrowser(animated: true) {
-                    self.resizableImageView?.removeFromSuperview()
-                    self.backgroundView.removeFromSuperview()
+                    self.cleanupViews()
                 }
             })
+    }
+    
+    func cleanupViews() {
+        self.resizableImageView?.removeFromSuperview()
+        self.backgroundView.removeFromSuperview()
     }
 }
 

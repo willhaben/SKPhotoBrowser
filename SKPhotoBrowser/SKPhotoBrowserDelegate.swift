@@ -63,15 +63,25 @@ import Foundation
     @objc optional func removePhoto(_ browser: SKPhotoBrowser, index: Int, reload: @escaping (() -> Void))
     
     /**
-     Asks the delegate for the view for a certain photo. Needed to detemine the animation when presenting/closing the browser.
+     Asks the delegate for the view for a certain photo. Needed to detemine the animation when presenting the browser.
      
      - Parameter browser: reference to the calling SKPhotoBrowser
      - Parameter index: the index of the removed photo
      
      - Returns: the view to animate to
      */
-    @objc optional func viewForPhoto(_ browser: SKPhotoBrowser, index: Int) -> UIView?
+    @objc optional func presentationViewForPhoto(_ browser: SKPhotoBrowser, index: Int) -> UIView?
     
+    /**
+     Asks the delegate for the view for a certain photo. Needed to detemine the animation when closing the browser.
+     
+     - Parameter browser: reference to the calling SKPhotoBrowser
+     - Parameter index: the index of the removed photo
+     
+     - Returns: the view to animate to
+     */
+    @objc optional func dismissViewForPhoto(_ browser: SKPhotoBrowser, index: Int) -> UIView?
+
     /**
      Tells the delegate that the controls view toggled visibility
      
