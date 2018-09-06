@@ -96,10 +96,10 @@ class SKAnimator: NSObject, SKPhotoBrowserAnimatorDelegate {
         backgroundView.alpha = 1.0
         
         switch dimissType {
-        case .normal:
-            backgroundView.backgroundColor = .black
-        case .swipe(let backgroundColor):
-            backgroundView.backgroundColor = backgroundColor
+            case .normal:
+                backgroundView.backgroundColor = .black
+            case .swipe(let backgroundColor):
+                backgroundView.backgroundColor = backgroundColor
         }
         
         
@@ -131,10 +131,10 @@ class SKAnimator: NSObject, SKPhotoBrowserAnimatorDelegate {
                 senderViewForAnimation?.isHidden = false
                 
                 switch dimissType {
-                case .normal:
-                    dismissFadeOut(completion: dismissCompletion)
-                case .swipe:
-                    dismissAnimationUpOrDown(completion: dismissCompletion)
+                    case .normal:
+                        dismissFadeOut(completion: dismissCompletion)
+                    case .swipe:
+                        dismissAnimationUpOrDown(completion: dismissCompletion)
                 }
             }
         }
