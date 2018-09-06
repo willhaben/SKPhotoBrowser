@@ -272,7 +272,7 @@ extension SKZoomingScrollView: SKDetectingViewDelegate {
         }
         
         if browser.areControlsHidden() == false && SKPhotoBrowserOptions.enableSingleTapDismiss == true {
-            browser.determineAndClose()
+            browser.determineAndClose(dimissType: .normal)
         } else {
             browser.toggleControls()
         }
@@ -294,7 +294,7 @@ extension SKZoomingScrollView: SKDetectingImageViewDelegate {
             return
         }
         if SKPhotoBrowserOptions.enableSingleTapDismiss {
-            browser.determineAndClose()
+            browser.determineAndClose(dimissType: .normal)
         } else {
             browser.toggleControls()
         }
