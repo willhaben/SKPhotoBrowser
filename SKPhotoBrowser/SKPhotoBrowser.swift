@@ -10,6 +10,11 @@ import UIKit
 
 public let SKPHOTO_LOADING_DID_END_NOTIFICATION = "photoLoadingDidEndNotification"
 
+public enum DismissType {
+    case normal
+    case swipe(UIColor)
+}
+
 // MARK: - SKPhotoBrowser
 open class SKPhotoBrowser: UIViewController {
     // open function
@@ -153,6 +158,10 @@ open class SKPhotoBrowser: UIViewController {
     override open var prefersStatusBarHidden: Bool {
         return !SKPhotoBrowserOptions.displayStatusbar
     }
+
+	override open var preferredStatusBarStyle: UIStatusBarStyle {
+		return .lightContent
+	}
     
     // MARK: - Notification
     @objc open func handleSKPhotoLoadingDidEndNotification(_ notification: Notification) {
@@ -221,9 +230,9 @@ open class SKPhotoBrowser: UIViewController {
         }
     }
     
-    open func determineAndClose() {
+    open func determineAndClose(dimissType: DismissType) {
         delegate?.willDismissAtPageIndex?(self.currentPageIndex)
-        animator.willDismiss(self)
+        animator.willDismiss(self, dimissType: dimissType)
     }
     
     open func popupShare(includeCaption: Bool = true) {
@@ -435,12 +444,13 @@ internal extension SKPhotoBrowser {
         translatedPoint = CGPoint(x: firstX, y: firstY + translatedPoint.y)
         zoomingScrollView.center = translatedPoint
         
-        let minOffset: CGFloat = viewHalfHeight / 4
+        let minOffset: CGFloat = 20
         let offset: CGFloat = 1 - (zoomingScrollView.center.y > viewHalfHeight
             ? zoomingScrollView.center.y - viewHalfHeight
             : -(zoomingScrollView.center.y - viewHalfHeight)) / viewHalfHeight
         
-        view.backgroundColor = bgColor.withAlphaComponent(max(0.7, offset))
+        let backgroundColor = bgColor.withAlphaComponent(max(0.7, offset))
+        view.backgroundColor = backgroundColor
         
         // gesture end
         if sender.state == .ended {
@@ -448,7 +458,7 @@ internal extension SKPhotoBrowser {
             if zoomingScrollView.center.y > viewHalfHeight + minOffset
                 || zoomingScrollView.center.y < viewHalfHeight - minOffset {
                 
-                determineAndClose()
+                determineAndClose(dimissType: .swipe(backgroundColor))
                 
             } else {
                 // Continue Showing View

@@ -74,7 +74,7 @@ class SKActionView: UIView {
     }
     
     @objc func closeButtonPressed(_ sender: UIButton) {
-        browser?.determineAndClose()
+        browser?.determineAndClose(dimissType: .normal)
     }
     
     @objc func deleteButtonPressed(_ sender: UIButton) {

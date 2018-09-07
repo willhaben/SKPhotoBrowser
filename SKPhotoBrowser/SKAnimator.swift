@@ -8,9 +8,9 @@
 
 import UIKit
 
-@objc public protocol SKPhotoBrowserAnimatorDelegate {
+public protocol SKPhotoBrowserAnimatorDelegate {
     func willPresent(_ browser: SKPhotoBrowser)
-    func willDismiss(_ browser: SKPhotoBrowser)
+    func willDismiss(_ browser: SKPhotoBrowser, dimissType: DismissType)
 }
 
 class SKAnimator: NSObject, SKPhotoBrowserAnimatorDelegate {
@@ -78,24 +78,30 @@ class SKAnimator: NSObject, SKPhotoBrowserAnimatorDelegate {
         presentAnimation(browser)
     }
     
-    func willDismiss(_ browser: SKPhotoBrowser) {
-        guard let sender = browser.delegate?.dismissViewForPhoto?(browser, index: browser.currentPageIndex),
-            let image = browser.photoAtIndex(browser.currentPageIndex).underlyingImage,
-            let scrollView = browser.pageDisplayedAtIndex(browser.currentPageIndex) else {
-                
-            senderViewForAnimation?.isHidden = false
-            browser.dismissPhotoBrowser(animated: false, completion: {
+    func willDismiss(_ browser: SKPhotoBrowser, dimissType: DismissType) {
+        let dismissCompletion: () -> Void = {
+            browser.dismissPhotoBrowser(animated: true) {
                 self.cleanupViews()
-            })
+            }
+        }
+        
+        guard let image = browser.photoAtIndex(browser.currentPageIndex).underlyingImage, let scrollView = browser.pageDisplayedAtIndex(browser.currentPageIndex) else {
+            dismissCompletion()
             return
         }
-
-        senderViewForAnimation = sender
+        
+        
         browser.view.isHidden = true
         backgroundView.isHidden = false
         backgroundView.alpha = 1.0
-        backgroundView.backgroundColor = .clear
-        senderViewOriginalFrame = calcOriginFrame(sender)
+        
+        switch dimissType {
+            case .normal:
+                backgroundView.backgroundColor = .black
+            case .swipe(let backgroundColor):
+                backgroundView.backgroundColor = backgroundColor
+        }
+        
         
         if let resizableImageView = resizableImageView {
             let photo = browser.photoAtIndex(browser.currentPageIndex)
@@ -113,13 +119,25 @@ class SKAnimator: NSObject, SKPhotoBrowserAnimatorDelegate {
             resizableImageView.alpha = 1.0
             resizableImageView.clipsToBounds = true
             resizableImageView.contentMode = photo.contentMode
-            if let view = senderViewForAnimation, view.layer.cornerRadius != 0 {
+            if let view = browser.delegate?.dismissViewForPhoto?(browser, index: browser.currentPageIndex), view.layer.cornerRadius != 0 {
+                senderViewForAnimation = view
+                senderViewOriginalFrame = calcOriginFrame(view)
                 let duration = (animationDuration * Double(animationDamping))
                 resizableImageView.layer.masksToBounds = true
                 resizableImageView.addCornerRadiusAnimation(0, to: view.layer.cornerRadius, duration: duration)
+                
+                dismissAnimationToSourceImage(completion: dismissCompletion)
+            } else {
+                senderViewForAnimation?.isHidden = false
+                
+                switch dimissType {
+                    case .normal:
+                        dismissFadeOut(completion: dismissCompletion)
+                    case .swipe:
+                        dismissAnimationUpOrDown(completion: dismissCompletion)
+                }
             }
         }
-        dismissAnimation(browser)
     }
 }
 
@@ -177,16 +195,16 @@ private extension SKAnimator {
                 browser.showButtons()
                 self.backgroundView.alpha = 1.0
                 self.resizableImageView?.frame = finalFrame
-            },
+        },
             completion: { (_) -> Void in
                 browser.view.alpha = 1.0
                 browser.view.isHidden = false
                 self.backgroundView.isHidden = true
                 self.resizableImageView?.alpha = 0.0
-            })
+        })
     }
     
-    func dismissAnimation(_ browser: SKPhotoBrowser, completion: (() -> Void)? = nil) {
+    func dismissAnimationToSourceImage(completion: @escaping () -> Void) {
         let finalFrame = self.senderViewOriginalFrame
 
         UIView.animate(
@@ -198,12 +216,47 @@ private extension SKAnimator {
             animations: {
                 self.backgroundView.alpha = 0.0
                 self.resizableImageView?.layer.frame = finalFrame
-            },
+        },
             completion: { (_) -> Void in
-                browser.dismissPhotoBrowser(animated: true) {
-                    self.cleanupViews()
-                }
-            })
+                completion()
+        })
+    }
+    
+    func dismissAnimationUpOrDown(completion: @escaping () -> Void) {
+        guard let resizableImageView = self.resizableImageView else {
+            completion()
+            return
+        }
+        var finalFrame = resizableImageView.frame
+        if resizableImageView.center.y > SKMesurement.screenHeight / 2 {
+            finalFrame.origin.y = SKMesurement.screenHeight
+        }
+        else {
+            finalFrame.origin.y = -finalFrame.height
+        }
+        
+        
+        UIView.animate(
+            withDuration: 0.3,
+            animations: {
+                self.backgroundView.alpha = 0.0
+                self.resizableImageView?.layer.frame = finalFrame
+                self.resizableImageView?.alpha = 0.0
+        }, completion: { _ in
+            completion()
+        })
+        
+    }
+    
+    func dismissFadeOut(completion: @escaping () -> Void) {
+        UIView.animate(
+            withDuration: 0.3,
+            animations: {
+                self.backgroundView.alpha = 0.0
+                self.resizableImageView?.alpha = 0.0
+        }, completion: { _ in
+            completion()
+        })
     }
     
     func cleanupViews() {
