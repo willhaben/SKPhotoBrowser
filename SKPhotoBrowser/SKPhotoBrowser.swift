@@ -400,7 +400,7 @@ internal extension SKPhotoBrowser {
             if #available(iOS 11.0, *) {
                 return view.safeAreaInsets.bottom
             } else {
-                return 15
+                return view.layoutMargins.bottom
             }
         }()
         return view.bounds.divided(atDistance: 44, from: .maxYEdge).slice.offsetBy(dx: 0, dy: -offset)
