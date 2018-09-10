@@ -577,9 +577,11 @@ private extension SKPhotoBrowser {
     
     func configureToolbar() {
         toolbar = SKToolbar(frame: frameForToolbarAtOrientation(), browser: self)
-		// Since we don't need the toolbar for now we simply just don't add it as a subview
-		// Also the subview gets partially laid over the `SKPaginationView` which leads to problems when clicking the next and previous buttons
-       	// view.addSubview(toolbar)
+		// Only add the toolbar if display actions are available
+		guard SKPhotoBrowserOptions.displayAction else {
+			return
+		}
+		view.addSubview(toolbar)
     }
 
     func setControlsHidden(_ hidden: Bool, animated: Bool, permanent: Bool) {
