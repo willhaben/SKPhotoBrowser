@@ -99,7 +99,7 @@ open class SKPhotoBrowser: UIViewController {
     
     func setup() {
         modalPresentationCapturesStatusBarAppearance = true
-        modalPresentationStyle = .custom
+        modalPresentationStyle = .fullScreen
         modalTransitionStyle = .crossDissolve
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(handleSKPhotoLoadingDidEndNotification(_:)),
