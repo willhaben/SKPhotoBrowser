@@ -22,7 +22,7 @@ class SKAnimator: NSObject, SKPhotoBrowserAnimatorDelegate {
         guard let window = UIApplication.shared.preferredApplicationWindow else { fatalError() }
         
         let backgroundView = UIView(frame: window.frame)
-        backgroundView.backgroundColor = .black
+        backgroundView.backgroundColor = SKPhotoBrowserOptions.backgroundColor
         backgroundView.alpha = 0.0
         return backgroundView
     }()
@@ -78,19 +78,18 @@ class SKAnimator: NSObject, SKPhotoBrowserAnimatorDelegate {
         presentAnimation(browser)
     }
     
-    func willDismiss(_ browser: SKPhotoBrowser, dimissType: DismissType) {
-        let dismissCompletion: () -> Void = {
-            browser.dismissPhotoBrowser(animated: true) {
-                self.cleanupViews()
-            }
-        }
-        
-        guard let image = browser.photoAtIndex(browser.currentPageIndex).underlyingImage, let scrollView = browser.pageDisplayedAtIndex(browser.currentPageIndex) else {
-            dismissCompletion()
+	func willDismiss(_ browser: SKPhotoBrowser, dimissType: DismissType) {
+		let dismissCompletion: () -> Void = {
+			browser.dismissPhotoBrowser(animated: true) {
+				self.cleanupViews()
+			}
+		}
+
+		guard let image = browser.photoAtIndex(browser.currentPageIndex).underlyingImage, let scrollView = browser.pageDisplayedAtIndex(browser.currentPageIndex) else {
+			dismissCompletion()
             return
         }
-        
-        
+                
         browser.view.isHidden = true
         backgroundView.isHidden = false
         backgroundView.alpha = 1.0
@@ -190,7 +189,7 @@ private extension SKAnimator {
             delay: 0,
             usingSpringWithDamping: animationDamping,
             initialSpringVelocity: 0,
-            options: UIViewAnimationOptions(),
+            options: UIView.AnimationOptions(),
             animations: {
                 browser.showButtons()
                 self.backgroundView.alpha = 1.0
@@ -212,7 +211,7 @@ private extension SKAnimator {
             delay: 0,
             usingSpringWithDamping: animationDamping,
             initialSpringVelocity: 0,
-            options: UIViewAnimationOptions(),
+            options: UIView.AnimationOptions(),
             animations: {
                 self.backgroundView.alpha = 0.0
                 self.resizableImageView?.layer.frame = finalFrame

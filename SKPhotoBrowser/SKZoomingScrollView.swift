@@ -73,7 +73,7 @@ open class SKZoomingScrollView: UIScrollView {
         delegate = self
         showsHorizontalScrollIndicator = SKPhotoBrowserOptions.displayHorizontalScrollIndicator
         showsVerticalScrollIndicator = SKPhotoBrowserOptions.displayVerticalScrollIndicator
-        decelerationRate = UIScrollViewDecelerationRateFast
+        decelerationRate = .fast
         autoresizingMask = [.flexibleWidth, .flexibleTopMargin, .flexibleBottomMargin, .flexibleRightMargin, .flexibleLeftMargin]
     }
     
@@ -121,7 +121,7 @@ open class SKZoomingScrollView: UIScrollView {
         
         let xScale = boundsSize.width / imageSize.width
         let yScale = boundsSize.height / imageSize.height
-        var minScale: CGFloat = min(xScale, yScale)
+        var minScale: CGFloat = min(xScale.isNormal ? xScale : 1.0 , yScale.isNormal ? yScale : 1.0)
         var maxScale: CGFloat = 1.0
         
         let scale = max(SKMesurement.screenScale, 2.0)

@@ -36,7 +36,7 @@ open class SKCaptionView: UIView {
         let width: CGFloat = size.width - photoLabelPadding * 2
         let height: CGFloat = photoLabel.font.lineHeight * CGFloat(photoLabel.numberOfLines)
         
-        let attributedText = NSAttributedString(string: text, attributes: [NSAttributedStringKey.font: font])
+        let attributedText = NSAttributedString(string: text, attributes: [NSAttributedString.Key.font: font])
         let textSize = attributedText.boundingRect(with: CGSize(width: width, height: height), options: .usesLineFragmentOrigin, context: nil).size
         
         return CGSize(width: textSize.width, height: textSize.height + photoLabelPadding * 2)
@@ -56,7 +56,7 @@ private extension SKCaptionView {
         photoLabel = UILabel(frame: CGRect(x: photoLabelPadding, y: 0, width: bounds.size.width - (photoLabelPadding * 2), height: bounds.size.height))
         photoLabel.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         photoLabel.isOpaque = false
-        photoLabel.backgroundColor = .clear
+        photoLabel.backgroundColor = SKCaptionOptions.backgroundColor
         photoLabel.textColor = SKCaptionOptions.textColor
         photoLabel.textAlignment = SKCaptionOptions.textAlignment
         photoLabel.lineBreakMode = SKCaptionOptions.lineBreakMode
@@ -65,6 +65,7 @@ private extension SKCaptionView {
         photoLabel.shadowColor = UIColor(white: 0.0, alpha: 0.5)
         photoLabel.shadowOffset = CGSize(width: 0.0, height: 1.0)
         photoLabel.text = photo?.caption
+
         addSubview(photoLabel)
     }
 }
