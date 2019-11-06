@@ -45,7 +45,8 @@ open class SKPhotoBrowser: UIViewController {
     fileprivate var isEndAnimationByToolBar: Bool = true
     fileprivate var isViewActive: Bool = false
     fileprivate var isPerformingLayout: Bool = false
-    
+    fileprivate var isUserDragging: Bool = false
+
     // pangesture property
     fileprivate var firstX: CGFloat = 0.0
     fileprivate var firstY: CGFloat = 0.0
@@ -623,12 +624,15 @@ private extension SKPhotoBrowser {
 
 extension SKPhotoBrowser: UIScrollViewDelegate {
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        guard isViewActive else { return }
-        guard !isPerformingLayout else { return }
-        
-        // tile page
-        pagingScrollView.tilePages()
-        
+        guard isViewActive, !isPerformingLayout, isUserDragging else { return }
+
+        // Tile Page
+		// handling scrollViewDidScroll code only when isUserDragging flag is true to prevent crashes
+		// Crash: https://www.fabric.io/wh-at/ios/apps/at.willhaben.mobileapp/issues/bde90b26067b177baab08fb408c67c51?time=last-seven-days
+		// Issue: https://jira.willhaben.at/browse/IOS-497
+		// Fix: Answer 5 on https://src-bin.com/en/q/8fb647
+		pagingScrollView.tilePages()
+
         // Calculate current page
         let previousCurrentPage = currentPageIndex
         let visibleBounds = pagingScrollView.bounds
@@ -640,7 +644,12 @@ extension SKPhotoBrowser: UIScrollViewDelegate {
         }
     }
     
-    public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+	public func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+		isUserDragging = true
+	}
+
+	public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+		isUserDragging = false
         hideControlsAfterDelay()
         
         let currentIndex = pagingScrollView.contentOffset.x / pagingScrollView.frame.size.width
@@ -650,4 +659,10 @@ extension SKPhotoBrowser: UIScrollViewDelegate {
     public func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
         isEndAnimationByToolBar = true
     }
+
+	public func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
+		if velocity == .zero { // scrollViewDidEndDecelerating won't be called in this case
+			isUserDragging = false
+		}
+	}
 }
