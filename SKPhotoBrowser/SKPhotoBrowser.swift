@@ -651,3 +651,92 @@ extension SKPhotoBrowser: UIScrollViewDelegate {
         isEndAnimationByToolBar = true
     }
 }
+
+// MARK: - IOS-497 AB-Testing
+open class SKPhotoBrowserVariantA: SKPhotoBrowser { // limitedToUserInteraction
+	fileprivate var isUserDragging: Bool = false
+
+	public override func scrollViewDidScroll(_ scrollView: UIScrollView) {
+		guard isViewActive, !isPerformingLayout, isUserDragging else { return }
+
+         // Tile Page
+ 		// handling scrollViewDidScroll code only when isUserDragging flag is true to prevent crashes
+ 		// Crash: https://www.fabric.io/wh-at/ios/apps/at.willhaben.mobileapp/issues/bde90b26067b177baab08fb408c67c51?time=last-seven-days
+ 		// Issue: https://jira.willhaben.at/browse/IOS-497
+ 		// Fix: Answer 5 on https://src-bin.com/en/q/8fb647
+ 		pagingScrollView.tilePages()
+
+         // Calculate current page
+         let previousCurrentPage = currentPageIndex
+         let visibleBounds = pagingScrollView.bounds
+
+        currentPageIndex = min(max(Int(floor(visibleBounds.midX / visibleBounds.width)), 0), photos.count - 1)
+        if currentPageIndex != previousCurrentPage {
+            delegate?.didShowPhotoAtIndex?(self, index: currentPageIndex)
+            paginationView.update(currentPageIndex)
+        }
+	}
+
+	public func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+ 		isUserDragging = true
+ 	}
+
+	public override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+		isUserDragging = false
+        hideControlsAfterDelay()
+
+        let currentIndex = pagingScrollView.contentOffset.x / pagingScrollView.frame.size.width
+        delegate?.didScrollToIndex?(self, index: Int(currentIndex))
+    }
+
+	public func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
+		if velocity == .zero { // scrollViewDidEndDecelerating won't be called in this case
+ 			isUserDragging = false
+ 		}
+	}
+
+    public convenience init(photos: [SKPhotoProtocol], initialPageIndex: Int) {
+        self.init(nibName: nil, bundle: nil)
+        self.photos = photos
+        self.photos.forEach { $0.checkCache() }
+        self.currentPageIndex = min(initialPageIndex, photos.count - 1)
+        self.initPageIndex = self.currentPageIndex
+        animator.senderOriginImage = photos[currentPageIndex].underlyingImage
+        animator.senderViewForAnimation = photos[currentPageIndex] as? UIView
+    }
+}
+
+// MARK: - IOS-497 AB-Testing
+open class SKPhotoBrowserVariantB: SKPhotoBrowser { // limitedToIsDraggingFlag
+
+	public override func scrollViewDidScroll(_ scrollView: UIScrollView) {
+		guard isViewActive, !isPerformingLayout, !scrollView.isDragging else { return }
+
+		// Tile Page
+ 		// handling scrollViewDidScroll code only when scrollView.isDragging flag is false to prevent crashes
+ 		// Crash: https://www.fabric.io/wh-at/ios/apps/at.willhaben.mobileapp/issues/bde90b26067b177baab08fb408c67c51?time=last-seven-days
+ 		// Issue: https://jira.willhaben.at/browse/IOS-497
+ 		// Fix: Answer 5 on https://src-bin.com/en/q/8fb647
+        pagingScrollView.tilePages()
+
+        // Calculate current page
+        let previousCurrentPage = currentPageIndex
+        let visibleBounds = pagingScrollView.bounds
+        currentPageIndex = min(max(Int(floor(visibleBounds.midX / visibleBounds.width)), 0), photos.count - 1)
+
+        if currentPageIndex != previousCurrentPage {
+            delegate?.didShowPhotoAtIndex?(self, index: currentPageIndex)
+            paginationView.update(currentPageIndex)
+        }
+    }
+
+    public convenience init(photos: [SKPhotoProtocol], initialPageIndex: Int) {
+        self.init(nibName: nil, bundle: nil)
+        self.photos = photos
+        self.photos.forEach { $0.checkCache() }
+        self.currentPageIndex = min(initialPageIndex, photos.count - 1)
+        self.initPageIndex = self.currentPageIndex
+        animator.senderOriginImage = photos[currentPageIndex].underlyingImage
+        animator.senderViewForAnimation = photos[currentPageIndex] as? UIView
+    }
+}
